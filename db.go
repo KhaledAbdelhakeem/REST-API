@@ -29,6 +29,70 @@ func NewMySQLStorage(cfg mysql.Config) *MySQLStorage {
 
 func (s *MySQLStorage) Init() (*sql.DB, error) {
 	//initialize the tables
+	if err := s.createProjectsTable(); err!=nil {
+		return nil,err
+	}
+	if err := s.createUsersTable(); err!=nil {
+		return nil,err
+	}
+	if err := s.createTasksTable(); err!=nil {
+		return nil,err
+	}
+
 	return s.db, nil
 
 }
+
+func (s*MySQLStorage) createProjectsTable() error {
+	_,err := s.db.Exec(`
+		CREATE TABLE IF NOT EXISITS projects (
+				id INT UNSIGNED NOT NULL AUTO_INCREAMENT,
+				name VARCHAR(255) NOT NULL , 
+				createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+				PRIMARY KEY (id)
+		)ENGINE=InnoDB DEFAULT CHARSET=utf8
+	`)
+		return err 
+	}
+
+
+
+func (s*MySQLStorage) createTasksTable() error {
+	_,err := s.db.Exec(`
+		CREATE TABLE IF NOT EXISITS tasks (
+				id INT UNSIGNED NOT NULL AUTO_INCREAMENT,
+				name VARCHAR(255) NOT NULL , 
+				
+				status ENUM('TODO','IN_PROGRESS,'INTESTING','DONE') NOT NULL DEFAULT 'TODO',
+				projectId INT UNSIGNED NOT NULL ,
+				assignedToID INT UNSIGNED NOT NULL , 
+				createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+				PRIMARY KEY (id)
+				FOREIGN KEY (assignedToID) REFERENCES users(id)
+				FOREIGN KEY (projected) REFERNCES projects (id)
+		)ENGINE=InnoDB DEFAULT CHARSET=utf8
+	`)
+		return err 
+	}
+
+
+func (s*MySQLStorage) createUsersTable() error {
+	_,err := s.db.Exec(`
+		CREATE TABLE IF NOT EXISITS users (
+				id INT UNSIGNED NOT NULL AUTO_INCREAMENT,
+				email VARCHAR(255) NOT NULL , 
+				firstName VARCHAR(255) NOT NULL , 
+				lastName VARCHAR(255) NOT NULL , 
+				password VARCHAR(255) NOT NULL , 
+				createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+				PRIMARY KEY (id)
+				UNIQUE KEY (email)
+				
+		)ENGINE=InnoDB DEFAULT CHARSET=utf8
+	`)
+	
+		return err 
+	}

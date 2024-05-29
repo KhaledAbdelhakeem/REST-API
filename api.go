@@ -25,7 +25,7 @@ func (s *APIServer) Serve() {
 	tasksService := NewTasksService(s.store)
 	tasksService.RegisterRoutes(router)
 
-	log.Println("Starting the API server At %s", s.addr)
+	log.Println("Starting the API server At ", s.addr)
 
 	log.Fatal(http.ListenAndServe(s.addr, subrouter))
 }
