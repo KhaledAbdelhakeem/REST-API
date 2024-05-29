@@ -2,17 +2,29 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 
 	"github.com/go-sql-driver/mysql"
 )
 
-type MySQLStorage struct {
+type MyPGSQLStorage struct {
 	db *sql.DB
 }
 
-func NewMySQLStorage(cfg mysql.Config) *MySQLStorage {
-	db, err := sql.Open("mysql", cfg.FormatDSN())
+const (
+	host     = "localhost"
+	port     = 5432
+	user     = "postgres"
+	password = "postgres"
+	dbname   = "postgres"
+)
+
+func NewMyPGSQLStorage(cfg mysql.Config) *MyPGSQLStorage {
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
+		"password=%s dbname=%s sslmode=disable",
+		host, port, user, password, dbname)
+	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -23,76 +35,65 @@ func NewMySQLStorage(cfg mysql.Config) *MySQLStorage {
 	}
 	log.Println("Connected to MySQL ")
 
-	return &MySQLStorage{db: db}
+	return &MyPGSQLStorage{db: db}
 
 }
 
-func (s *MySQLStorage) Init() (*sql.DB, error) {
+func (s *MyPGSQLStorage) Init() (*sql.DB, error) {
 	//initialize the tables
-	if err := s.createProjectsTable(); err!=nil {
-		return nil,err
+	if err := s.createProjectsTable(); err != nil {
+		return nil, err
 	}
-	if err := s.createUsersTable(); err!=nil {
-		return nil,err
+	if err := s.createUsersTable(); err != nil {
+		return nil, err
 	}
-	if err := s.createTasksTable(); err!=nil {
-		return nil,err
+	if err := s.createTasksTable(); err != nil {
+		return nil, err
 	}
 
 	return s.db, nil
 
 }
 
-func (s*MySQLStorage) createProjectsTable() error {
-	_,err := s.db.Exec(`
-		CREATE TABLE IF NOT EXISITS projects (
-				id INT UNSIGNED NOT NULL AUTO_INCREAMENT,
-				name VARCHAR(255) NOT NULL , 
-				createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-				PRIMARY KEY (id)
-		)ENGINE=InnoDB DEFAULT CHARSET=utf8
+func (s *MyPGSQLStorage) createProjectsTable() error {
+	_, err := s.db.Exec(`CREATE TABLE IF NOT EXISTS projects (
+		id SERIAL PRIMARY KEY,
+		name VARCHAR(255) NOT NULL,
+		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+	);
 	`)
-		return err 
-	}
+	return err
+}
 
-
-
-func (s*MySQLStorage) createTasksTable() error {
-	_,err := s.db.Exec(`
-		CREATE TABLE IF NOT EXISITS tasks (
-				id INT UNSIGNED NOT NULL AUTO_INCREAMENT,
-				name VARCHAR(255) NOT NULL , 
-				
-				status ENUM('TODO','IN_PROGRESS,'INTESTING','DONE') NOT NULL DEFAULT 'TODO',
-				projectId INT UNSIGNED NOT NULL ,
-				assignedToID INT UNSIGNED NOT NULL , 
-				createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-				PRIMARY KEY (id)
-				FOREIGN KEY (assignedToID) REFERENCES users(id)
-				FOREIGN KEY (projected) REFERNCES projects (id)
-		)ENGINE=InnoDB DEFAULT CHARSET=utf8
+func (s *MyPGSQLStorage) createTasksTable() error {
+	_, err := s.db.Exec(`
+	CREATE TABLE IF NOT EXISTS tasks (
+		id SERIAL PRIMARY KEY,
+		name VARCHAR(255) NOT NULL,
+		status VARCHAR(20) NOT NULL DEFAULT 'TODO',
+		project_id INT NOT NULL,
+		assigned_to_id INT NOT NULL,
+		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (assigned_to_id) REFERENCES users(id),
+		FOREIGN KEY (project_id) REFERENCES projects(id)
+	);
+		
 	`)
-		return err 
-	}
+	return err
+}
 
-
-func (s*MySQLStorage) createUsersTable() error {
-	_,err := s.db.Exec(`
-		CREATE TABLE IF NOT EXISITS users (
-				id INT UNSIGNED NOT NULL AUTO_INCREAMENT,
-				email VARCHAR(255) NOT NULL , 
-				firstName VARCHAR(255) NOT NULL , 
-				lastName VARCHAR(255) NOT NULL , 
-				password VARCHAR(255) NOT NULL , 
-				createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-				PRIMARY KEY (id)
-				UNIQUE KEY (email)
-				
-		)ENGINE=InnoDB DEFAULT CHARSET=utf8
+func (s *MyPGSQLStorage) createUsersTable() error {
+	_, err := s.db.Exec(`
+	CREATE TABLE IF NOT EXISTS users (
+		id SERIAL PRIMARY KEY,
+		email VARCHAR(255) NOT NULL UNIQUE,
+		first_name VARCHAR(255) NOT NULL,
+		last_name VARCHAR(255) NOT NULL,
+		password VARCHAR(255) NOT NULL,
+		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+	);
+		
 	`)
-	
-		return err 
-	}
+
+	return err
+}

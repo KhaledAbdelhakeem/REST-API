@@ -2,13 +2,9 @@ package main
 
 import (
 	"log"
-	"github.com/KhaledAbdelhakeem/REST-API/config"
-	"github.com/KhaledAbdelhakeem/REST-API/api"
-	"github.com/KhaledAbdelhakeem/REST-API/config"
-	go
-
 
 	"github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -23,7 +19,7 @@ func main() {
 		ParseTime:            true,
 	}
 
-	sqlStorage := NewMySQLStorage(cfg)
+	sqlStorage := NewMyPGSQLStorage(cfg)
 
 	db, err := sqlStorage.Init()
 	if err != nil {

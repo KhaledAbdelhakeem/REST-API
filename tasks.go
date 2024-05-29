@@ -22,8 +22,8 @@ func NewTasksService(s Store) *TasksService {
 }
 
 func (s *TasksService) RegisterRoutes(r *mux.Router) {
-	r.HandleFunc("/tasks", s.handleCreateTask).Methods("POST")
-	r.HandleFunc("/tasks/{id}", s.handleGetTask).Methods("GET")
+	r.HandleFunc("/tasks",withJWTAuth(s.handleCreateTask, s.store)).Methods("POST")
+	r.HandleFunc("/tasks/{id}",withJWTAuth(s.handleGetTask, s.store)).Methods("GET")
 
 }
 
@@ -55,7 +55,20 @@ if err != nil {
 }
 
 func (s *TasksService) handleGetTask(w http.ResponseWriter, r *http.Request) {
+vars :=mux.Vars(r)
+id := vars["id"]
 
+if id ==""{
+	WriteJSON(w,http.StatusBadRequest, ErrorResponse{Error:"id is required"})
+	return
+}
+
+t, err := s.store.GetTask(id)
+if err != nil {
+	WriteJSON(w, http.StatusInternalServerError,ErrorResponse{Error:"task not found"})
+	return
+}
+WriteJSON(w,http.StatusOK,t)
 }
 
 func validateTaskPayload(task *Task) error {
