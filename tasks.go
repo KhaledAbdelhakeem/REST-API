@@ -18,8 +18,8 @@ type TasksService struct {
 
 func NewTasksService(s Store) *TasksService {
 	return &TasksService{store: s}
-
 }
+
 
 func (s *TasksService) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/tasks",withJWTAuth(s.handleCreateTask, s.store)).Methods("POST")

@@ -16,7 +16,8 @@ FROM build-stage AS run-test-stage
 FROM scratch as run-release-stage 
     WORKDIR /app    
 
-    COPY --from=build-stage /api /api 
+    COPY --from=build-stage /api /api
+
     
     EXPOSE 8080 
 
